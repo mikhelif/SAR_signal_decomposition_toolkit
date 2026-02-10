@@ -26,6 +26,11 @@ It is designed to be part of a larger SAR processing workflow.
 ## Use Cases
 
 -   RFI mitigation\
+    ![](https://github.com/mikhelif/sar-subaperture-processor/blob/main/examples/20260130_vv_02_01.gif)
+    Loop thourgh the generated sub-aperture.
+    Identify Doppler intervals contaminated by RFI.
+    Generate a final sub-aperture using the maximum clean bandwidth.
+    
 -   Increase the number of training samples for ATR models\
 -   Along-track interferometry\
 
