@@ -23,19 +23,6 @@ It is designed to be part of a larger SAR processing workflow.
 
 ------------------------------------------------------------------------
 
-## Use Cases
-
--   RFI mitigation\
-    ![](https://github.com/mikhelif/sar-subaperture-processor/blob/main/examples/20260130_vv_02_01.gif)
-    Loop thourgh the generated sub-aperture.
-    Identify Doppler intervals contaminated by RFI.
-    Generate a final sub-aperture using the maximum clean bandwidth.
-    
--   Increase the number of training samples for ATR models\
--   Along-track interferometry\
-
-------------------------------------------------------------------------
-
 ## Processing Overview
 
 1.  Read focused SLC SAR data\
@@ -77,6 +64,25 @@ This results in:
 -   No overlap\
 -   Two symmetric windows centered at ±0.25\
 
+------------------------------------------------------------------------
+
+## Use Cases
+
+-   RFI mitigation\
+    ![](https://github.com/mikhelif/sar-subaperture-processor/blob/main/examples/20260130_vv_02_01.gif)
+    Loop thourgh the generated sub-aperture.
+    Identify Doppler intervals contaminated by RFI.
+    Generate a final sub-aperture using the maximum clean bandwidth.
+    
+-   Increase the number of training samples for ATR models\
+    Generate multiple overlapping sub-apertures images. 
+    Each produces a slightly different  view.
+    Use the resulting stack of images as additional training samples (after further processing).
+    <img width="3240" height="2160" alt="Nouveau projet" src="https://github.com/user-attachments/assets/be4ace72-8f91-4c42-bd7d-a72021f11801" />
+    *: SLC image accessed through Capella space Open Data Gallery (https://www.capellaspace.com/earth-observation/gallery)
+    Note that the sub aperture images generated above present some artifacts due to residual phase ramps, a deramp and demodulation function is currently being worked on.
+    
+-   Along-track interferometry\
 
 ------------------------------------------------------------------------
 
@@ -109,4 +115,13 @@ Two-band structure:
 
 The processor converts both formats internally to complex data before
 processing.
+
+------------------------------------------------------------------------
+
+## Notes
+
+-   Rows correspond to azimuth, columns to range\
+-   No deramping and demodulation is applied (Currently being worked on, will be available on future version)
+-   GIF export performs normalization and is not radiometrically meaningful.
+-   Code is designed to be part of a larger SAR processing workflow.
 
