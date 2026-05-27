@@ -92,7 +92,7 @@ class SARSubapertureProcessor:
         
         return self 
 
-    def save_subs_intensity(self, out_dir, prefix"sub, bit_depth=16, georeference=True, scale="log"):
+    def save_subs_intensity(self, out_dir, prefix="sub, bit_depth=16, georeference=True, scale="log"):
         """
         Save Subapertures as GeoTiff files
 
