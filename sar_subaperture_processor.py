@@ -122,7 +122,7 @@ class SARSubapertureProcessor:
             intensity = np.abs(sub) ** 2
 
             if scale.lower() in ['log', 'db']:
-            intensity = np.log1p(intensity)
+                intensity = np.log1p(intensity)
             #normalize intensity     need to add if statement.
             #intensity = intensity - intensity.min()
             #if intensity.max() > 0:
@@ -171,7 +171,7 @@ class SARSubapertureProcessor:
             intensity = np.abs(sub) **2
 
             if scale.lower() in ['log', 'db']:
-                intensity no.log1p(intensity)
+                intensity = np.log1p(intensity)
             #Normalize intensity
             intensity = intensity - intensity.min()
             if intensity.max() > 0:
@@ -187,7 +187,7 @@ class SARSubapertureProcessor:
             output_path,
             save_all=True,
             append_images=pil_frames[1:],
-            duration=durationl
+            duration=duration,
             loop=loop
         )
 
@@ -227,7 +227,7 @@ class SARSubapertureProcessor:
     
     def save_subs_intensity_w_downsample(self, out_dir, 
     prefix="sub", bit_depth=16, georeference=True, 
-    scale="log",downsample_coef=self.win_frac,downsample_range=0):
+    scale="log",downsample_coef=None,downsample_range=0):
 
         """
         Save Subapertures as GeoTiff files with downsampling
@@ -253,6 +253,9 @@ class SARSubapertureProcessor:
         """
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         az_ds = int(round(1 / downsample_coef))
+
+        if downsample_coef is None:
+            downsample_coef = self.win_frac
 
         if bit_depth == 8:
             dtype= 'uint8'
