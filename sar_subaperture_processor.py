@@ -52,45 +52,49 @@ class SARSubapertureProcessor:
         return self.slc, self.transform, self.crs
 
 
-    def generate_subapertures(self, win_frac, step_frac):
-        """ 
-        Generate azimut sub apertures using rolling windows FFT method.
+def generate_subapertures(self, win_frac, step_frac, filter='raised_cosine'):
+    """
+    Generate azimuth sub apertures using rolling windows FFT method.
 
-        Parameters:
+    Parameters:
         win_frac : float
             Window size as fraction of bandwidth
         step_frac : float
-            Step size as fraction of bandwidth 
-        """
-        self.win_frac= win_frac #needed for downsampling
+            Step size as fraction of bandwidth
+        filter : str
+            filter used: 'rectangular', 'raised_cosine', or 'hamming'
+    """
+    self.win_frac = win_frac  # needed for downsampling
 
-        #FFT along azimuth
+    az_fft = np.fft.fftshift(np.fft.fft(self.slc, axis=0), axes=0)
+    n_az = az_fft.shape[0]
+    freqs = np.linspace(-0.5, 0.5, n_az, endpoint=False)
+    win_half = win_frac / 2
+    starts = np.arange(-0.5, 0.5, step_frac)
+    self.subapertures = []
 
-        az_fft = np.fft.fftshift(np.fft.fft(self.slc, axis=0), axes=0)
+    for s in starts:
+        center = (s + win_half) % 1.0 - 0.5
+        if (center - win_half) < -0.5 or (center + win_half) > 0.5:
+            continue
+        df = np.abs(((freqs - center + 0.5) % 1.0) - 0.5)
+        w = np.zeros_like(freqs, dtype=np.float32)
+        inside = df <= win_half
 
-        n_az = az_fft.shape[0]
-        freqs = np.linspace(-0.5, 0.5, n_az, endpoint=False)
-        win_half = win_frac / 2
-
-
-        starts = np.arange(-0.5, 0.5, step_frac)
-        self.subapertures = []
-        for s in starts:
-            center = (s + win_half) % 1.0 - 0.5
-            
-            # Circular distance from center
-            df = np.abs(((freqs - center + 0.5) % 1.0) - 0.5)
-            # Raised cosine window
-            w = np.zeros_like(freqs, dtype=np.float32)
-            inside = df <= win_half
+        if filter == 'rectangular':
+            w[inside] = 1.0
+        elif filter == 'raised_cosine':
             w[inside] = 0.5 * (1 + np.cos(np.pi * df[inside] / win_half))
-            # Apply window
-            azw = az_fft * w[:, None]
-            # Inverse FFT
-            sub = np.fft.ifft(np.fft.ifftshift(azw, axes=0), axis=0)
-            self.subapertures.append(sub)
-        
-        return self 
+        elif filter == 'hamming':
+            w[inside] = 0.54 + 0.46 * np.cos(np.pi * df[inside] / win_half)
+        else:
+            raise ValueError(f"Unknown filter: {filter}. Choose 'rectangular', 'raised_cosine' or 'hamming'.")
+
+        azw = az_fft * w[:, None]
+        sub = np.fft.ifft(np.fft.ifftshift(azw, axes=0), axis=0)
+        self.subapertures.append(sub)
+
+    return self
 
     def save_subs_intensity(self, out_dir, prefix="sub", bit_depth=16, georeference=True, scale="log"):
         """
