@@ -33,7 +33,7 @@ class SARSubapertureProcessor:
         Read SLC data from file and return slc, transform, crs
         """
 
-        with rasterio.open(self.selc_path) as src:
+        with rasterio.open(self.slc_path) as src:
             if self.structure == 'IQ': 
                 I = src.read(1).astype(np.float32)
                 Q = src.read(2).astype(np.float32)
