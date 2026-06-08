@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 class SARSubapertureProcessor:
-    def __init__(selc, slc_path, structure):
+    def __init__(self, slc_path, structure):
         """
         Initialize with an SLC file.
 
