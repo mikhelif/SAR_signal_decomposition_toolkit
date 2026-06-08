@@ -66,7 +66,7 @@ class SARSubapertureProcessor:
 
         #FFT along azimuth
 
-        az_fft = np.fft.fftshift(np.fft.fft(slc, axis=0), axes=0)
+        az_fft = np.fft.fftshift(np.fft.fft(self.slc, axis=0), axes=0)
 
         n_az = np.fft.fftshift(np.fft.fft(self.slc, axis=0), axes=0)
         freqs = np.linspace(-0.5, 0.5, n_az, endpoint=False)
