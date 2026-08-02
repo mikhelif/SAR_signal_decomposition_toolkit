@@ -58,9 +58,9 @@ class SARSubapertureProcessor:
 
         Parameters:
             win_frac : float
-                Window size as fraction of bandwidth
+                Window size as fraction of bandwidth [0-1]
             step_frac : float
-                Step size as fraction of bandwidth
+                Step size as fraction of bandwidth [0-1]
             filter : str
                 filter used: 'rectangular', 'raised_cosine', or 'hamming'
         """
@@ -95,6 +95,45 @@ class SARSubapertureProcessor:
             self.subapertures.append(sub)
 
         return self
+
+
+    def generate_range_subbands(self, win_frac_rg, overlap):
+    """
+    Generate range frequency sub-bands.
+    
+    Parameters:
+        win_frac_rg : float
+            Sub-band width as fraction of total range bandwidth [0-1]
+        overlap : float
+            Overlap between sub-bands as fraction of sub-band width [0-1]
+    """
+        self.win_frac_rg = win_frac_rg
+
+        nr = self.slc.shape[1]
+        spec = np.fft.fftshift(np.fft.fft(self.slc, axis=1), axes=1)
+        band_width = int(nr * win_frac_rg)
+        step = int(band_width * (1 - overlap))
+
+        if step < 1:
+            raise ValueError("overlap too large")
+
+        n_subbands = 1 + int((nr - band_width) / step)
+        center0 = nr // 2
+        offsets = np.arange(n_subbands) - (n_subbands - 1) / 2
+        centers = center0 + offsets * step
+
+        self.subbands = []
+
+        for c in centers.astype(int):
+            start = max(0, c - band_width // 2)
+            stop = min(nr, start + band_width)
+            mask = np.zeros(nr, dtype=np.float32)
+            mask[start:stop] = 1.0
+            sub = np.fft.ifft(np.fft.ifftshift(spec * mask[None, :], axes=1), axis=1)
+            self.subbands.append(sub)
+
+        return self
+
 
     def save_subs_intensity(self, out_dir, prefix="sub", bit_depth=16, georeference=True, scale="log"):
         """
