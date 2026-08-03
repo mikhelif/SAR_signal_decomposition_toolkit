@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name="SAR_ignal_decomposition_toolkit",
+    name="SAR_signal_decomposition_toolkit",
     version="0.1.0",
     description="Python toolkit for SAR signal decomposition of SLC data, including azimuth sub-apertures and range-frequency sub-bands.",
     author="mourad_ikhelif",
