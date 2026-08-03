@@ -52,24 +52,24 @@ class SARSubapertureProcessor:
         return self.slc, self.transform, self.crs
 
 
-    def generate_subapertures(self, win_frac, step_frac, filter='raised_cosine'):
+    def generate_subapertures(self, win_frac_az, step_frac, filter='raised_cosine'):
         """
         Generate azimuth sub apertures using rolling windows FFT method.
 
         Parameters:
-            win_frac : float
+            win_frac_az : float
                 Window size as fraction of bandwidth [0-1]
             step_frac : float
                 Step size as fraction of bandwidth [0-1]
             filter : str
                 filter used: 'rectangular', 'raised_cosine', or 'hamming'
         """
-        self.win_frac = win_frac  # needed for downsampling
+        self.win_frac_az = win_frac_az  # needed for downsampling
 
         az_fft = np.fft.fftshift(np.fft.fft(self.slc, axis=0), axes=0)
         n_az = az_fft.shape[0]
         freqs = np.linspace(-0.5, 0.5, n_az, endpoint=False)
-        win_half = win_frac / 2
+        win_half = win_frac_az / 2
         starts = np.arange(-0.5, 0.5, step_frac)
         self.subapertures = []
 
