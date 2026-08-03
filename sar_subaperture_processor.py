@@ -134,8 +134,97 @@ class SARSubapertureProcessor:
 
         return self
 
+        def save_subs_intensity(self, out_dir, source ,prefix="sub", bit_depth=32,
+                        georeference=True, scale="linear",
+                        downsample=None, downsample_coef_az=None,
+                        downsample_coef_rg=None,
+                        ):
+            """
+            Save subapertures or subbands as individual GeoTiff files.
 
-    def save_subs_intensity(self, out_dir, prefix="sub", bit_depth=16, georeference=True, scale="log"):
+            Parameters:
+            out_dir : str
+                Output directory.
+            source : str
+                'subapertures' — export azimuth sub-apertures (default)
+                'subbands'     — export range frequency sub-bands
+            prefix : str
+                Prefix for output filenames.
+            bit_depth : int
+                Either 8 or 32 bit output.
+            scale : str
+                Either 'linear' or 'log/db'.
+            georeference : bool
+                Include georeferencing (by default only for 16bit images).
+            downsample : str or None
+                None   — no downsampling (default)
+                'az'   — downsample azimuth axis only
+                'rg'   — downsample range axis only
+                'both' — downsample both axes
+            downsample_coef_az : float or None
+                Azimuth bandwidth fraction [0-1].
+                Defaults to self.win_frac_az if None.
+            downsample_coef_rg : float or None
+                Range bandwidth fraction [0-1].
+                Defaults to self.win_frac_rg if None.
+            """
+            Path(out_dir).mkdir(parents=True, exist_ok=True)
+
+            data = self.subapertures if source == 'subapertures' else self.subbands
+
+            if downsample in ('az', 'both'):
+                coef_az = downsample_coef_az if downsample_coef_az is not None else self.win_frac_az
+                ds_az = int(round(1 / coef_az))
+            else:
+                ds_az = 1
+
+            if downsample in ('rg', 'both'):
+                coef_rg = downsample_coef_rg if downsample_coef_rg is not None else self.win_frac_rg
+                ds_rg = int(round(1 / coef_rg))
+            else:
+                ds_rg = 1
+
+            if bit_depth == 8:
+                dtype = 'uint8'
+                georeference = False
+            elif bit_depth == 32:
+                dtype = 'float32'
+
+            for i, sub in enumerate(data):
+                intensity = np.abs(sub) ** 2
+
+                if scale.lower() in ['log', 'db']:
+                    intensity = np.log1p(intensity)
+
+                if ds_az > 1:
+                    intensity = intensity[::ds_az, :]
+                if ds_rg > 1:
+                    intensity = intensity[:, ::ds_rg]
+
+                fname = f"{out_dir}/{prefix}_{i:03d}.tif"
+
+                if georeference and bit_depth == 16:
+                    use_transform = self.transform * Affine.scale(ds_rg, ds_az)
+                    use_crs = self.crs
+                else:
+                    use_transform = Affine.identity()
+                    use_crs = None
+
+                with rasterio.open(
+                    fname, "w", driver="GTiff",
+                    height=intensity.shape[0],
+                    width=intensity.shape[1],
+                    count=1, dtype=dtype,
+                    transform=use_transform,
+                    crs=use_crs
+                ) as dst:
+                    dst.write(intensity, 1)
+
+            return self 
+
+
+
+    def save_subs_intensity_old(self, out_dir, prefix="sub", bit_depth=16, georeference=True, scale="linear"):
         """
         Save Subapertures as GeoTiff files
 
@@ -268,46 +357,7 @@ class SARSubapertureProcessor:
                 dst.write(I, 1)
                 dst.write(Q, 2)
     
-    def save_subs_intensity_w_downsample(self, out_dir, 
-    prefix="sub", bit_depth=16, georeference=True, 
-    scale="log",downsample_coef=None,downsample_range=0):
-
-        """
-        Save Subapertures as GeoTiff files with downsampling
-
-        Parameters:
-        out_dir : str
-            Ouput directory.
-        prefix : str
-            Prefix for output filenames.
-        bit_depth : int
-            Either 8 or 16 bit output.
-        scale : str
-            Either 'linear' or 'log/db".
-        georeference : bool
-            Include georeferencing (by default only for 16bit images).
-        downsample_coef : float
-            Fraction of azimuth bandwidth used [0-1]
-
-        downsample_range : bool
-            If 0 => downsample range to match azimuth.
-            Default 0 => non-square pixels (but physically correct).
-
-        """
-        Path(out_dir).mkdir(parents=True, exist_ok=True)
-        az_ds = int(round(1 / downsample_coef))
-
-        if downsample_coef is None:
-            downsample_coef = self.win_frac
-
-        if bit_depth == 8:
-            dtype= 'uint8'
-            max_val = 255
-            georeference = False
-        elif bit_depth == 16:
-            dtype = 'float32'
-            max_val = 65535
-
+    
         for i,sub in enumerate(self.subapertures):
             intensity = np.abs(sub) ** 2
 
