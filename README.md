@@ -1,10 +1,9 @@
-# SAR Sub-Aperture Processor
+# SAR_signal_decomposition_toolkit
 
 This repository contains Python utilities for Synthetic Aperture Radar
-(SAR) sub-aperture processing.\
-It allows the generation of sub-aperture images from SLC products and
-export of both complex and intensity data to GeoTIFF with down-sampling
-options in both range and azimuth.\
+(SAR) signal decomposition of Single Look Complex (SLC) data.\
+It currently supports both azimuth sub-aperture decomposition and range-frequency sub-banding of SLC products,
+with export of both complex and intensity data to GeoTIFF format.\
 It is designed to be part of a larger SAR processing workflow.
 
 ------------------------------------------------------------------------
@@ -13,6 +12,8 @@ It is designed to be part of a larger SAR processing workflow.
 
 -   Azimuth sub-aperture decomposition using a rolling window on a
     normalized Doppler frequency axis \[-0.5, 0.5\]\
+-   Multiple window functions for sub-aperture generation (Rectangular, Raised Cosine, Hamming)\
+-   Range frequency sub-band decomposition with configurable bandwidth and overlap\
 -   Full control over window size and step increment, enabling
     configurable overlap between sub-apertures\
 -   Flexible output formats: 8-bit, 16-bit or 32-bit GeoTIFF
@@ -21,17 +22,57 @@ It is designed to be part of a larger SAR processing workflow.
 -   Support for both IQ (In-phase / Quadrature) and Amplitude/Phase SLC
     formats
 
+
+------------------------------------------------------------------------
+
+## Installation
+
+You can install the package in a dedicated virtual environment or an existing venv.
+```bash
+git clone https://github.com/mikhelif/SAR_signal_decomposition_toolkit
+cd SAR_signal_decomposition_toolkit
+pip install -r requirements.txt
+pip install -e .
+```
+
+------------------------------------------------------------------------
+
+## Quick Start
+
+```python
+from sardecomp import SARSubapertureProcessor
+
+# Initialize the processor and read the SLC
+processor = SARSubapertureProcessor("path/to/slc.tif", structure="IQ")
+processor.read_slc()
+
+# Generate azimuth sub-apertures
+processor.generate_subapertures(win_frac_az=0.5, step_frac=0.5)
+
+# Generate range-frequency sub-bands
+processor.generate_range_subbands(win_frac_rg=0.25, overlap=0.7)
+
+# Export intensity products
+processor.save_subs_intensity(out_dir="subapertures_folder", source="subapertures")
+
+processor.save_subs_intensity(out_dir="subbands_folder", source="subbands")
+```
+
+
 ------------------------------------------------------------------------
 
 ## Processing Overview
 
 1.  Read focused SLC SAR data\
-2.  FFT along azimuth transforming SLC data to the frequency domain\
-3.  Apply a raised-cosine bandpass filter at different frequency
-    positions\
-4.  Inverse FFT back to spatial domain to obtain a sub-aperture stack\
+2.  FFT along the selected dimension transforming SLC data to the frequency domain\
+3.  Apply a moving spectral window\
+4.  Inverse FFT back to spatial domain\
 5.  Compute intensity (optional)\
 6.  Downsample and export GeoTIFFs
+
+The two decomposition methods use slightly different conventions for controlling window overlap and step size.
+I tried both approaches to test which feels more intuitive in practice. Eventually only one convention will be kept.
+
 
 ------------------------------------------------------------------------
 
@@ -42,7 +83,7 @@ Doppler frequency axis \[-0.5, 0.5\].
 
 It is controlled by 2 parameters:
 
--   `win_frac` \[0--1\] : Controls the window width, i.e., the fraction
+-   `win_frac_az` \[0--1\] : Controls the window width, i.e., the fraction
     of the total azimuth bandwidth used per sub-aperture\
 -   `step_frac` \[0--1\] : Step between consecutive sub-apertures as a
     fraction of the total azimuth bandwidth
@@ -50,7 +91,7 @@ It is controlled by 2 parameters:
 These parameters also allow control over overlap between consecutive
 sub-apertures:
 
-overlap = max(0, win_frac - step_frac)
+overlap = max(0, win_frac_az - step_frac)
 
 For example:
 
@@ -66,38 +107,34 @@ This results in:
 
 ------------------------------------------------------------------------
 
-## Use Cases
+## Range Frequency Sub-band Generation
 
--   RFI mitigation\
-    ![](https://github.com/mikhelif/sar-subaperture-processor/blob/main/examples/20260130_vv_02_01.gif)
-    Loop thourgh the generated sub-aperture.
-    Identify Doppler intervals contaminated by RFI.
-    Generate a final sub-aperture using the maximum clean bandwidth.
-    
--   Increase the number of training samples for ATR models\
-    Generate multiple overlapping sub-apertures images. 
-    Each produces a slightly different  view.
-    Use the resulting stack of images as additional training samples (after further processing).
-    <img width="3240" height="2160" alt="Nouveau projet" src="https://github.com/user-attachments/assets/be4ace72-8f91-4c42-bd7d-a72021f11801" />
-    *: SLC image accessed through Capella space Open Data Gallery (https://www.capellaspace.com/earth-observation/gallery)
-    Note that the sub aperture images generated above present some artifacts due to residual phase ramps, a deramp and demodulation function is currently being worked on.
-    
--   Along-track interferometry\
+Range frequency sub-bands are generated by spectral masking on the range frequency axis. 
+It is controlled by 2 parameters:
+
+-   `win_frac_rg` \[0--1\] : Controls the sub-band width, i.e., the fraction of the total bandwidth used per sub-band\
+-   `overlap` \[0--1\] : Overlap between consecutive sub-bands as a fraction of the sub-band width\
+
+The number of sub-bands is determined automatically from these two parameters:
+
+step = win_frac_rg * (1 - overlap)
+n_subbands = 1 + int((1 - win_frac_rg) / step)
+
 
 ------------------------------------------------------------------------
 
 ## Resolution and Downsampling
 
-Reducing azimuth bandwidth degrades azimuth resolution:
+Reducing bandwidth degrades resolution in the corresponding dimension:
 
-ρ_az,sub = ρ_az,full / win_frac
+ρ_az,sub = ρ_az,full / win_frac_az
+ρ_rg,sub = ρ_rg,full / win_frac_rg
 
-Azimuth downsampling can be applied proportionally to the
-bandwidth reduction:
+Downsampling can be applied proportionally to the bandwidth reduction in each axis:
 
 downsample factor ≈ 1 / win_frac
 
-Optional range downsampling is also supported
+Both axes can be downsampled independently or together using the 'downsample' parameter in the export functions.
 
 ------------------------------------------------------------------------
 
