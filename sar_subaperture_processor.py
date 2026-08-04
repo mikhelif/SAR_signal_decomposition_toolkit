@@ -9,7 +9,7 @@ from rasterio.transform import Affine
 from pathlib import Path
 
 
-class SARSubapertureProcessor:
+class SARDecomp:
     def __init__(self, slc_path, structure):
         """
         Initialize with an SLC file.
