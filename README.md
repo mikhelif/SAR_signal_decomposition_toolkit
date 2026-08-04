@@ -40,7 +40,7 @@ pip install -e .
 ## Quick Start
 
 ```python
-from sardecomp import SARSubapertureProcessor
+from sardecomp import SARDecomp
 
 # Initialize the processor and read the SLC
 processor = SARSubapertureProcessor("path/to/slc.tif", structure="IQ")
