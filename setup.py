@@ -7,7 +7,7 @@ setup(
     author="mourad_ikhelif",
     url="https://github.com/mikhelif/sar-subaperture-processor",
     python_requires=">=3.8",
-    py_modules=["SARDecomp"],
+    py_modules=["sar_decomposition"],
     install_requires=[
         "numpy",
         "rasterio",
