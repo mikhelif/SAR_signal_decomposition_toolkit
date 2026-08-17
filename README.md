@@ -40,10 +40,10 @@ pip install -e .
 ## Quick Start
 
 ```python
-from sardecomp import SARDecomp
+from sar_decomposition import SARDecomp
 
 # Initialize the processor and read the SLC
-processor = SARSubapertureProcessor("path/to/slc.tif", structure="IQ")
+processor = SARDecomp("path/to/slc.tif", structure="IQ")
 processor.read_slc()
 
 # Generate azimuth sub-apertures
