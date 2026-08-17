@@ -98,15 +98,15 @@ class SARDecomp:
 
 
     def generate_range_subbands(self, win_frac_rg, overlap):
-    """
-    Generate range frequency sub-bands.
+        """
+        Generate range frequency sub-bands.
     
-    Parameters:
-        win_frac_rg : float
-            Sub-band width as fraction of total range bandwidth [0-1]
-        overlap : float
-            Overlap between sub-bands as fraction of sub-band width [0-1]
-    """
+        Parameters:
+            win_frac_rg : float
+                Sub-band width as fraction of total range bandwidth [0-1]
+                overlap : float
+                Overlap between sub-bands as fraction of sub-band width [0-1]
+        """
         self.win_frac_rg = win_frac_rg
 
         nr = self.slc.shape[1]
